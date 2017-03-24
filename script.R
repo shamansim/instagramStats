@@ -12,65 +12,61 @@ library(magrittr)
 
 thepage <- readLines('201703241823_instagramSourceCode.html')
 
-grep("<p class=\"content\">", thepage) # putting keywords around the caption for instance
-thepage[190]
+# caption
+caption <- '<p class="content">' %>%
+  grep(thepage, value=TRUE) %>%
+  gsub('<[^>]*>', "", .) %>%
+  gsub('&nbsp;', "", .) %>%
+  gsub('  ', "", .)
 
-thepage[grep("<p class=\"content\">", thepage)]
+# time
+timedate <- '<i class="fa fa-clock-o"></i>([^<]*)</span>' %>%
+  grep(thepage, value=TRUE) %>%
+  gsub('<[^>]*>', "", .) %>%
+  gsub('  ', "", .) %>%
+  strptime("%I:%M%p %m/%d/%Y")
 
-# continue explore you recognition patterns
-# properly gather and write them
-captionPattern <- '<p class="content">'
-timePattern <- '<i class="fa fa-clock-o"></i>([^<]*)</span>'
-commentsPattern <- '<i class="fa fa-comments-o"></i>'
-likesPattern <- '<i class="fa fa-heart"></i>'
-imageLinkPattern <- '<img src="'
-locationPattern <- '<i class="fa fa-map-marker"></i>'
+# comments
+comments <- '<i class="fa fa-comments-o"></i>' %>%
+  grep(thepage, value=TRUE) %>%
+  gsub('<[^>]*>', "", .) %>%
+  gsub(' ', "", .) %>%
+  as.integer
 
-# grabthe values
-captionData <- grep(captionPattern, thepage, value=TRUE) # /!\ careful apparently some images do not have captions
-timeData <- grep(timePattern, thepage, value=TRUE)
-commentsData <- grep(commentsPattern, thepage, value=TRUE)
-likesData <- grep(likesPattern, thepage, value=TRUE)
-imageLinkData <- grep(imageLinkPattern, thepage, value=TRUE)
-locationData <- grep(locationPattern, thepage, value=TRUE) # /!\ careful apparently some images do not have captions
+# likes
+likes <- '<i class="fa fa-heart"></i>' %>%
+  grep(thepage, value=TRUE) %>%
+  gsub('<[^>]*>', "", .) %>%
+  gsub(' ', "", .) %>%
+  as.integer
+  
+# location
+locations <- '<i class="fa fa-map-marker"></i>' %>%
+  grep(thepage, value=TRUE) %>%
+  gsub('<[^>]*>', "", .) %>%
+  gsub('&#039;', "", .) %>%
+  gsub('  ', "", .) %>%
+  as.factor
 
-# parse imageLinkData
+# photoLink
 # image shouldn't be http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg
 myPhotoLinkPattern <- 'http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg'
-imageLinkData <- imageLinkData[grep(myPhotoLinkPattern, imageLinkData, invert = T)] # reverse grep
-
-# remove html tags and others
-captionData2 <- gsub('<[^>]*>', "", captionData)
-captionData3 <- gsub('&nbsp;', "", captionData2)
-captionDataClean <- gsub('  ', "", captionData3)
-
-commentsData2 <- gsub('<[^>]*>', "", commentsData)
-commentsDataClean <- as.integer(gsub(' ', "", commentsData2))
-
-imageLinkDataClean <- sub('.*"(.*)".*', "\\1", imageLinkData)
-
-likesData2 <- gsub('<[^>]*>', "", likesData)
-likesDataClean <- as.integer(gsub(' ', "", likesData2))
-
-timeData2 <- gsub('<[^>]*>', "", timeData)
-timeData3 <- gsub('  ', "", timeData2)
-timeDataClean <- strptime(timeData3, "%I:%M%p %m/%d/%Y")
-
-locationData2 <- gsub('<[^>]*>', "", locationData)
-locationData3 <- gsub('&#039;', "", locationData2)
-locationDataClean <- as.factor(gsub('  ', "", locationData3))
+photoLink <- '<img src="' %>%
+  grep(thepage, value=TRUE) %>%
+  extract(grep(myPhotoLinkPattern, ., invert = T)) %>% # reverse grep
+  sub('.*"(.*)".*', "\\1", .)
 
 # extract hashtag words
 ######
 
 # basic statistics
-(nbPosts <- length(timeDataClean))
-(averageLikes <- mean(likesDataClean))
-(averageComments <- mean(commentsDataClean))
-(uniqueLocation <- length(levels(locationDataClean)))
+(nbPosts <- length(timedate))
+(averageLikes <- mean(likes))
+(averageComments <- mean(comments))
+(uniqueLocation <- length(levels(locations)))
 
 # grather everything
-DataClean <- data.frame(time = timeDataClean, likes = likesDataClean, comments = commentsDataClean) %>%
+DataClean <- data.frame(time = timedate, likes = likes, comments = comments) %>%
   arrange(time)
 
 # graphs
