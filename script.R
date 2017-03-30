@@ -19,6 +19,21 @@ caption <- '<p class="content">' %>%
   gsub('&nbsp;', "", .) %>%
   gsub('  ', "", .)
 
+caption <- lapply(strsplit(caption, ' '), function(w) grep('#', w, value=TRUE))
+
+# # 4 of my pictures do not have captions
+# # function to insert characters/numbers into a vector
+# insert.at <- function(a, pos, ...){
+#   dots <- list(...)
+#   stopifnot(length(dots)==length(pos))
+#   result <- vector("list", 2*length(pos)+1)
+#   result[c(TRUE,FALSE)] <- split(a, cumsum(seq_along(a) %in% (pos+1)))
+#   result[c(FALSE,TRUE)] <- dots
+#   unlist(result)
+# }
+# pos <- c(6, 12, 21, 44) # fill by counting on your instagram
+# caption <- insert.at(caption, pos, "No caption", "No caption", "No caption", "No caption")
+
 # time
 timedate <- '<i class="fa fa-clock-o"></i>([^<]*)</span>' %>%
   grep(thepage, value=TRUE) %>%
@@ -47,6 +62,8 @@ locations <- '<i class="fa fa-map-marker"></i>' %>%
   gsub('&#039;', "", .) %>%
   gsub('  ', "", .) %>%
   as.factor
+
+# 17 of my pictures do not have locations
 
 # photoLink
 # image shouldn't be http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg
@@ -88,3 +105,49 @@ ggplot(DataClean, aes(time, likes)) +
   scale_x_datetime(breaks = date_breaks("1 month"), labels = date_format("%m/%Y"))
 
 ggsave(filename = "201703241823_Progression.png", width = 29, height = 20, units = "cm")
+
+# analysing captions
+
+# caption usage
+captionTable <- caption %>%
+  unlist %>%
+  table %>%
+  sort(decreasing = T) %>%
+  as.data.frame %>%
+  set_colnames(c("hashtag", "nb"))
+
+ggplot(head(captionTable, 100), aes(hashtag, nb)) +
+  geom_bar(stat = 'identity') +
+  theme_minimal() +
+  labs(x = "", y = "Frequency") +
+  ggtitle(bquote(atop(
+    "Instagram @shamansim hashtag usage TOP 100 (24th March, 2017)",
+    atop(italic(.(subtitle)))
+  ))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  scale_y_continuous(breaks = seq(from = 0, to = max(captionTable$nb)+5, by = 5))
+
+ggsave(filename = "201703241823_HashtagBarplot.png", width = 29, height = 20, units = "cm")
+
+# nb of hashtags and relation with likes
+nbHashtags <- sapply(caption, function(x) length(x)) %>% as.vector
+captionLikes <- data.frame("hashtag" = unlist(caption), "nblikes" = rep(likes, nbHashtags), "nbcomments" = rep(comments, nbHashtags)) %>%
+  group_by(hashtag) %>%
+  summarise_each(funs(sum)) %>%
+  arrange(desc(nblikes)) %>%
+  as.data.frame
+
+captionLikes <- captionLikes[order(captionLikes$nblikes, decreasing = T), ]
+
+ggplot(head(captionLikes, 100), aes(hashtag, nbcomments, fill = nblikes)) +
+  geom_bar(stat = 'identity') +
+  theme_minimal() +
+  labs(x = "", y = "Cumulated nb of likes") +
+  ggtitle(bquote(atop(
+    "Instagram @shamansim hashtag likes comments TOP 100 (24th March, 2017)",
+    atop(italic(.(subtitle)))
+  ))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))# +
+  # scale_y_continuous(breaks = seq(from = 0, to = max(captionTable$nb)+5, by = 5))
+
+ggsave(filename = "201703241823_HashtagLikesCommentsBarplot.png", width = 29, height = 20, units = "cm")
