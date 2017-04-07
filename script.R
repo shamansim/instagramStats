@@ -104,7 +104,7 @@ ggplot(DataClean, aes(time, likes)) +
   theme(axis.text.x = element_text(angle = 90)) +
   scale_x_datetime(breaks = date_breaks("1 month"), labels = date_format("%m/%Y"))
 
-ggsave(filename = "201703241823_Progression.png", width = 29, height = 20, units = "cm")
+# ggsave(filename = "201703241823_Progression.png", width = 29, height = 20, units = "cm")
 
 # analysing captions
 
@@ -127,7 +127,7 @@ ggplot(head(captionTable, 100), aes(hashtag, nb)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   scale_y_continuous(breaks = seq(from = 0, to = max(captionTable$nb)+5, by = 5))
 
-ggsave(filename = "201703241823_HashtagBarplot.png", width = 29, height = 20, units = "cm")
+# ggsave(filename = "201703241823_HashtagBarplot.png", width = 29, height = 20, units = "cm")
 
 # nb of hashtags and relation with likes
 nbHashtags <- sapply(caption, function(x) length(x)) %>% as.vector
@@ -150,4 +150,4 @@ ggplot(head(captionLikes, 100), aes(hashtag, nbcomments, fill = nblikes)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))# +
   # scale_y_continuous(breaks = seq(from = 0, to = max(captionTable$nb)+5, by = 5))
 
-ggsave(filename = "201703241823_HashtagLikesCommentsBarplot.png", width = 29, height = 20, units = "cm")
+# ggsave(filename = "201703241823_HashtagLikesCommentsBarplot.png", width = 29, height = 20, units = "cm")
