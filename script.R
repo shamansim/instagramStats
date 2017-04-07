@@ -3,8 +3,8 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(magrittr)
-# library(EBImage) # :(
-# library(RCurl)
+library(EBImage)
+library(RCurl)
 
 # download all source code of pages from your instagram account on that website http://www.pictaram.com/user/shamansim/1945339775
 # copy-paste it into the same text file
@@ -72,6 +72,14 @@ photoLink <- '<img src="' %>%
   grep(thepage, value=TRUE) %>%
   extract(grep(myPhotoLinkPattern, ., invert = T)) %>% # reverse grep
   sub('.*"(.*)".*', "\\1", .)
+
+index <- 0
+for(i in photoLink){
+  index <- index + 1
+  download.file(url = i, destfile = paste0("Photos/", index, ".jpg"), mode = "wb")
+}
+
+# now all the miniatures (480x480) are in "Photos/" named as 1.jpg, ..., nbOfPhotos.jpg
 
 # extract hashtag words
 ######
