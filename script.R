@@ -10,11 +10,28 @@ library(RCurl)
 # copy-paste it into the same text file
 # inspire from http://statistics.berkeley.edu/computing/r-reading-webpages
 
-thepage <- readLines('201703241823_instagramSourceCode.html')
+# Automatically downloading each pages of pictaram for a defined user
+
+userid <- "shamansim/1945339775"
+
+firstpageURL <- paste0("http://www.pictaram.com/user/", userid)
+
+extractNextPageURL <- function(pageURL){
+  if(length(grep(pattern = "NEXT PAGE", x = readLines(pageURL))) == 0) {
+    return (pageURL)
+  }
+  else {
+    print(pageURL) # just to follow the recursion
+    nextURLraw <- readLines(pageURL)[grep(pattern = "NEXT PAGE", x = readLines(pageURL))]
+    return(c(pageURL, extractNextPageURL(strsplit(nextURLraw, "\"") %>% unlist %>% extract(2))))
+  }
+}
+
+pagesURL <- extractNextPageURL(firstpageURL)
 
 # caption
 caption <- '<p class="content">' %>%
-  grep(thepage, value=TRUE) %>%
+  grep(concatenatedPage, value=TRUE) %>%
   gsub('<[^>]*>', "", .) %>%
   gsub('&nbsp;', "", .) %>%
   gsub('  ', "", .)
@@ -36,28 +53,28 @@ caption <- lapply(strsplit(caption, ' '), function(w) grep('#', w, value=TRUE))
 
 # time
 timedate <- '<i class="fa fa-clock-o"></i>([^<]*)</span>' %>%
-  grep(thepage, value=TRUE) %>%
+  grep(concatenatedPage, value=TRUE) %>%
   gsub('<[^>]*>', "", .) %>%
   gsub('  ', "", .) %>%
   strptime("%I:%M%p %m/%d/%Y")
 
 # comments
 comments <- '<i class="fa fa-comments-o"></i>' %>%
-  grep(thepage, value=TRUE) %>%
+  grep(concatenatedPage, value=TRUE) %>%
   gsub('<[^>]*>', "", .) %>%
   gsub(' ', "", .) %>%
   as.integer
 
 # likes
 likes <- '<i class="fa fa-heart"></i>' %>%
-  grep(thepage, value=TRUE) %>%
+  grep(concatenatedPage, value=TRUE) %>%
   gsub('<[^>]*>', "", .) %>%
   gsub(' ', "", .) %>%
   as.integer
   
 # location
 locations <- '<i class="fa fa-map-marker"></i>' %>%
-  grep(thepage, value=TRUE) %>%
+  grep(concatenatedPage, value=TRUE) %>%
   gsub('<[^>]*>', "", .) %>%
   gsub('&#039;', "", .) %>%
   gsub('  ', "", .) %>%
@@ -69,7 +86,7 @@ locations <- '<i class="fa fa-map-marker"></i>' %>%
 # image shouldn't be http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg
 myPhotoLinkPattern <- 'http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg'
 photoLink <- '<img src="' %>%
-  grep(thepage, value=TRUE) %>%
+  grep(concatenatedPage, value=TRUE) %>%
   extract(grep(myPhotoLinkPattern, ., invert = T)) %>% # reverse grep
   sub('.*"(.*)".*', "\\1", .)
 
