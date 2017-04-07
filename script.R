@@ -17,17 +17,19 @@ userid <- "shamansim/1945339775"
 firstpageURL <- paste0("http://www.pictaram.com/user/", userid)
 
 extractNextPageURL <- function(pageURL){
-  if(length(grep(pattern = "NEXT PAGE", x = readLines(pageURL))) == 0) {
+  if(length(grep(pattern = "NEXT PAGE", x = readLines(pageURL, warn = F))) == 0) {
     return (pageURL)
   }
   else {
     print(pageURL) # just to follow the recursion
-    nextURLraw <- readLines(pageURL)[grep(pattern = "NEXT PAGE", x = readLines(pageURL))]
+    nextURLraw <- readLines(pageURL, warn = F)[grep(pattern = "NEXT PAGE", x = readLines(pageURL, warn = F))]
     return(c(pageURL, extractNextPageURL(strsplit(nextURLraw, "\"") %>% unlist %>% extract(2))))
   }
 }
 
 pagesURL <- extractNextPageURL(firstpageURL)
+pagesContent <- sapply(pagesURL, function(x) readLines(x, warn = F))
+concatenatedPage <- unlist(pagesContent)
 
 # caption
 caption <- '<p class="content">' %>%
@@ -83,12 +85,14 @@ locations <- '<i class="fa fa-map-marker"></i>' %>%
 # 17 of my pictures do not have locations
 
 # photoLink
-# image shouldn't be http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg
-myPhotoLinkPattern <- 'http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg'
-photoLink <- '<img src="' %>%
-  grep(concatenatedPage, value=TRUE) %>%
-  extract(grep(myPhotoLinkPattern, ., invert = T)) %>% # reverse grep
-  sub('.*"(.*)".*', "\\1", .)
+# # image shouldn't be http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg
+# myPhotoLinkPattern <- 'http://scontent.cdninstagram.com/t51.2885-19/s150x150/12139891_506761289492626_942895162_a.jpg'
+photoLink <- "http://scontent-sea" %>%
+  grep(concatenatedPage, value = T) %>%
+  # extract(grep(myPhotoLinkPattern, ., invert = T)) %>% # reverse grep
+  sub('.*"(.*)".*', "\\1", .) %>%
+  grep("shamansim", ., invert = T, value = T) %>%
+  as.vector
 
 index <- 0
 for(i in photoLink){
@@ -123,13 +127,13 @@ ggplot(DataClean, aes(time, likes)) +
   theme_minimal() +
   labs(x = "", y = "Number of likes") +
   ggtitle(bquote(atop(
-    "Instagram @shamansim progression (24th March, 2017)",
+    "Instagram @shamansim progression (7th April, 2017)",
     atop(italic(.(subtitle)))
     ))) +
   theme(axis.text.x = element_text(angle = 90)) +
   scale_x_datetime(breaks = date_breaks("1 month"), labels = date_format("%m/%Y"))
 
-# ggsave(filename = "201703241823_Progression.png", width = 29, height = 20, units = "cm")
+# ggsave(filename = "201704072300_Progression.png", width = 29, height = 20, units = "cm")
 
 # analysing captions
 
@@ -146,13 +150,13 @@ ggplot(head(captionTable, 100), aes(hashtag, nb)) +
   theme_minimal() +
   labs(x = "", y = "Frequency") +
   ggtitle(bquote(atop(
-    "Instagram @shamansim hashtag usage TOP 100 (24th March, 2017)",
+    "Instagram @shamansim hashtag usage TOP 100 (7th April, 2017)",
     atop(italic(.(subtitle)))
   ))) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   scale_y_continuous(breaks = seq(from = 0, to = max(captionTable$nb)+5, by = 5))
 
-# ggsave(filename = "201703241823_HashtagBarplot.png", width = 29, height = 20, units = "cm")
+# ggsave(filename = "201704072300_HashtagBarplot.png", width = 29, height = 20, units = "cm")
 
 # nb of hashtags and relation with likes
 nbHashtags <- sapply(caption, function(x) length(x)) %>% as.vector
